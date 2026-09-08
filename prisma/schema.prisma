@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  name      String
+  email     String?   @unique
+  attempts  Attempt[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("users")
+}
+
+model Problem {
+  id            String           @id @default(cuid())
+  slug          String           @unique
+  number        String           // e.g. "01", "02"
+  title         String
+  description   String
+  context       String           @default("")
+  difficulty    String           // "EASY" | "MEDIUM" | "HARD"
+  estimatedTime String           // e.g. "~45 MIN"
+  focus         String           // e.g. "RESPONSIBILITIES · OBJECT RELATIONSHIPS"
+  requirements  String[]         // List of functional requirements
+  sections      ProblemSection[]
+  attempts      Attempt[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@map("problems")
+}
+
+model ProblemSection {
+  id                 String            @id @default(cuid())
+  problemId          String
+  problem            Problem           @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  title              String
+  description        String            // The prompt / guidance for this section
+  placeholder        String            @default("")
+  order              Int
+  evaluationCriteria String            @db.Text
+  responses          AttemptResponse[]
+  sectionReviews     SectionReview[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@unique([problemId, order])
+  @@map("problem_sections")
+}
+
+enum AttemptStatus {
+  DRAFT
+  IN_PROGRESS
+  SUBMITTED
+  REVIEWED
+  FAILED
+}
+
+model Attempt {
+  id           String            @id @default(cuid())
+  userId       String?
+  user         User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  problemId    String
+  problem      Problem           @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  status       AttemptStatus     @default(IN_PROGRESS)
+  overallScore Float?
+  submittedAt  DateTime?
+  responses    AttemptResponse[]
+  aiReview     AIReview?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([problemId])
+  @@index([userId])
+  @@index([status])
+  @@map("attempts")
+}
+
+model AttemptResponse {
+  id        String         @id @default(cuid())
+  attemptId String
+  attempt   Attempt        @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  sectionId String
+  section   ProblemSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  response  String         @db.Text
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([attemptId, sectionId])
+  @@map("attempt_responses")
+}
+
+model AIReview {
+  id                         String          @id @default(cuid())
+  attemptId                  String          @unique
+  attempt                    Attempt         @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  overallScore               Float
+  assessment                 String          // e.g. "STRONG FOUNDATION"
+  designSummary              String          @db.Text
+  strengths                  Json            // [{ title: string, description: string }]
+  improvements               Json            // [{ title: string, description: string }]
+  nextProblemRecommendation  Json            // { problemSlug: string, reason: string }
+  sectionReviews             SectionReview[]
+  createdAt                  DateTime        @default(now())
+  updatedAt                  DateTime        @updatedAt
+
+  @@map("ai_reviews")
+}
+
+model SectionReview {
+  id          String         @id @default(cuid())
+  aiReviewId  String
+  aiReview    AIReview       @relation(fields: [aiReviewId], references: [id], onDelete: Cascade)
+  sectionId   String
+  section     ProblemSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  score       Float          // e.g. 8.5
+  feedback    String         @db.Text
+  createdAt   DateTime       @default(now())
+
+  @@unique([aiReviewId, sectionId])
+  @@map("section_reviews")
+}
