@@ -1,5 +1,7 @@
 # DesignForge — LLD Practice & Evaluation Platform
 
+![DesignForge Platform Preview](./public/designforge-preview.png)
+
 DesignForge is an interactive Low-Level Design (LLD) practice platform engineered to help software developers transition from memorizing design patterns to reasoning critically about object modeling, state coordination, and architectural trade-offs.
 
 ---
