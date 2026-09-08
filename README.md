@@ -114,6 +114,6 @@ pnpm start
 
 AI-assisted development tools were utilized during the engineering process. A detailed account of where and how AI was used, prompt design, structured output validation, and system boundaries is documented in:
 
-[AI_USAGE.md](./AI_USAGE.md)
-[Research & Technical Decisions](./RESEARCH.md)
-[DESIGN.md](./DESIGN.md)
+[AI_USAGE.md](./AI_USAGE.md),
+[Research & Technical Decisions](./RESEARCH.md),
+[DESIGN.md](./DESIGN.md).
